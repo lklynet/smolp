@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMOLP - Free Online Image Optimization Tool</title>
+    <meta name="description" content="SMOLP is a free, fast, and secure online tool for optimizing your images. Reduce file size while maintaining quality with support for JPEG, PNG, and WebP formats.">
+    <meta name="keywords" content="image optimization, image compression, free image optimizer, webp converter, jpeg optimizer, png optimizer">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://smolp.lkly.net">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://smolp.lkly.net">
+    <meta property="og:title" content="SMOLP - Free Online Image Optimization Tool">
+    <meta property="og:description" content="Free, fast, and secure online tool for optimizing your images. Reduce file size while maintaining quality.">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://smolp.lkly.net">
+    <meta name="twitter:title" content="SMOLP - Free Online Image Optimization Tool">
+    <meta name="twitter:description" content="Free, fast, and secure online tool for optimizing your images. Reduce file size while maintaining quality.">
+    <script src="https://unpkg.com/alpinejs" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div x-data="imageProcessor()" class="min-h-screen" role="main">
+        <!-- JSON-LD Structured Data -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "SMOLP",
+            "url": "https://smolp.lkly.net",
+            "description": "Free online tool for optimizing images while maintaining quality. Supports JPEG, PNG, and WebP formats.",
+            "applicationCategory": "Image Processing Tool",
+            "operatingSystem": "All",
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+            },
+            "featureList": [
+                "Image compression",
+                "Multiple format support",
+                "Batch processing",
+                "Quality control",
+                "Local processing"
+            ]
+        }
+        </script>
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+                <h1 class="text-3xl font-bold text-gray-900">SMOLP</h1>
+                <p class="mt-1 text-sm text-gray-500">Free Image Optimization</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+            <!-- Upload Area -->
+            <div 
+                class="mt-4 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg"
+                @dragover.prevent="dragover = true"
+                @dragleave.prevent="dragover = false"
+                @drop.prevent="handleDrop($event)"
+                :class="{'border-blue-500 bg-blue-50': dragover}"
+            >
+                <div class="space-y-1 text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="flex text-sm text-gray-600">
+                        <label class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                            <span>Upload images</span>
+                            <input type="file" class="sr-only" multiple accept="image/*" @change="handleFileSelect($event)">
+                        </label>
+                        <p class="pl-1">or drag and drop</p>
+                    </div>
+                    <p class="text-xs text-gray-500">PNG, JPG, GIF</p>
+                </div>
+            </div>
+
+            <!-- Processing Area -->
+            <div x-show="files.length > 0" x-cloak class="mt-8">
+                <h2 class="text-lg font-medium text-gray-900">Images to Process</h2>
+                <div class="mt-4 space-y-4">
+                    <template x-for="(file, index) in files" :key="index">
+                        <div class="bg-white shadow rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <img :src="file.preview" class="h-16 w-16 object-cover rounded" :alt="'Preview of ' + file.name">
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900" x-text="file.name"></p>
+                                        <p class="text-sm text-gray-500" x-text="formatSize(file.size)"></p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-4">
+                                    <span x-show="file.optimizedSize" class="text-sm text-green-600">
+                                        Reduced by <span x-text="calculateReduction(file)"></span>%
+                                    </span>
+                                    <button 
+                                        @click="downloadOptimizedImage(index)"
+                                        x-show="file.optimizedBlob"
+                                        class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    >
+                                        Download
+                                    </button>
+                                    <button 
+                                        @click="removeFile(index)"
+                                        class="text-red-600 hover:text-red-900"
+                                    >
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Process Button -->
+                <div class="mt-6 flex justify-center">
+                    <section class="mt-4 flex justify-between items-center w-full max-w-2xl mx-auto" aria-label="Image Processing Controls">
+                        <div class="flex space-x-4" role="group" aria-label="Image Settings">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Output Format</label>
+                                <select x-model="outputFormat" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                    <option value="jpeg">JPEG</option>
+                                    <option value="png">PNG</option>
+                                    <option value="webp">WebP</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Quality</label>
+                                <input type="range" x-model.number="quality" min="0.1" max="1" step="0.1" class="mt-1 block w-full">
+                                <span class="text-sm text-gray-500" x-text="Math.round(quality * 100) + '%'"></span>
+                            </div>
+                        </div>
+                        <button 
+                            @click="allProcessed ? downloadAllImages() : processAllImages()"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            :disabled="processing"
+                        >
+                            <span x-show="!processing && !allProcessed">Process All Images</span>
+                            <span x-show="processing">Processing...</span>
+                            <span x-show="!processing && allProcessed">Download All</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function imageProcessor() {
+            return {
+                files: [],
+                dragover: false,
+                processing: false,
+                allProcessed: false,
+                outputFormat: 'jpeg', // 'jpeg', 'png', 'webp'
+                quality: 0.7, // 0.1 to 1.0 for jpeg/webp
+
+                handleDrop(event) {
+                    this.dragover = false;
+                    const droppedFiles = Array.from(event.dataTransfer.files);
+                    this.addFiles(droppedFiles);
+                },
+
+                handleFileSelect(event) {
+                    const selectedFiles = Array.from(event.target.files);
+                    this.addFiles(selectedFiles);
+                },
+
+                addFiles(newFiles) {
+                    const imageFiles = newFiles.filter(file => file.type.startsWith('image/'));
+                    
+                    imageFiles.forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.files.push({
+                                file: file,
+                                name: file.name,
+                                size: file.size,
+                                preview: e.target.result,
+                                optimizedBlob: null,
+                                optimizedSize: null
+                            });
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                },
+
+                async processAllImages() {
+                    this.processing = true;
+                    this.allProcessed = false;
+                    
+                    for (let i = 0; i < this.files.length; i++) {
+                        if (!this.files[i].optimizedBlob) {
+                            await this.optimizeImage(i);
+                        }
+                    }
+                    
+                    this.processing = false;
+                    this.allProcessed = true;
+                },
+
+                async downloadAllImages() {
+                    const zip = new JSZip();
+                    
+                    this.files.forEach((file, index) => {
+                        const extension = file.outputFormat || 'jpg';
+                        const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                        const fileName = `optimized-${originalName}.${extension}`;
+                        zip.file(fileName, file.optimizedBlob);
+                    });
+                    
+                    const zipBlob = await zip.generateAsync({type: 'blob'});
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(zipBlob);
+                    link.download = 'optimized-images.zip';
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                },
+
+                async optimizeImage(index) {
+                    const file = this.files[index].file;
+                    const img = new Image();
+                    
+                    img.src = URL.createObjectURL(file);
+                    await new Promise(resolve => img.onload = resolve);
+                    
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    ctx.drawImage(img, 0, 0);
+                    
+                    const mimeType = `image/${this.outputFormat}`;
+                    const blob = await new Promise(resolve => {
+                        canvas.toBlob(resolve, mimeType, this.outputFormat === 'png' ? undefined : this.quality);
+                    });
+                    
+                    this.files[index].optimizedBlob = blob;
+                    this.files[index].optimizedSize = blob.size;
+                    this.files[index].outputFormat = this.outputFormat;
+                    
+                    URL.revokeObjectURL(img.src);
+                },
+
+                downloadOptimizedImage(index) {
+                    const file = this.files[index];
+                    const extension = file.outputFormat || 'jpg';
+                    const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(file.optimizedBlob);
+                    link.download = `optimized-${originalName}.${extension}`;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                },
+
+                removeFile(index) {
+                    this.files.splice(index, 1);
+                },
+
+                formatSize(bytes) {
+                    const units = ['B', 'KB', 'MB'];
+                    let size = bytes;
+                    let unitIndex = 0;
+                    
+                    while (size >= 1024 && unitIndex < units.length - 1) {
+                        size /= 1024;
+                        unitIndex++;
+                    }
+                    
+                    return `${size.toFixed(1)} ${units[unitIndex]}`;
+                },
+
+                calculateReduction(file) {
+                    const reduction = ((file.size - file.optimizedSize) / file.size) * 100;
+                    return reduction.toFixed(1);
+                }
+            };
+        }
+    </script>
+</body>
+</html>
