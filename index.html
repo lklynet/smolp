@@ -35,6 +35,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/alpinejs" defer></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script>
         tailwind.config = {
           darkMode: 'class',
@@ -43,6 +45,16 @@
               fontFamily: {
                 pacifico: ['Pacifico', 'cursive'],
                 sans: ['Work Sans', 'system-ui', 'sans-serif']
+              },
+              // Add custom animation keyframes and utility
+              keyframes: {
+                'pulse-check': {
+                  '0%, 100%': { transform: 'scale(1)' },
+                  '50%': { transform: 'scale(1.25)' },
+                }
+              },
+              animation: {
+                'pulse-check': 'pulse-check 0.5s ease-in-out',
               }
             }
           }
@@ -162,7 +174,8 @@
             <div class="mb-8 text-center bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6 transition-colors duration-300">
                 <p class="text-base text-gray-600 dark:text-gray-400 transition-colors duration-300 max-w-xl mx-auto">
                     Optimize your images right in your browser. Smolp processes everything locally - your files never leave your device. 
-                    Support for JPEG, PNG, and WebP formats with adjustable quality settings.
+                    Support for JPEG, PNG, and WebP formats with adjustable quality settings. 
+                    <br><strong class="text-yellow-600 dark:text-yellow-400">(Note: The email function currently sends a confirmation list, but attaching the ZIP file directly is under development.)</strong>
                 </p>
             </div>
 
@@ -244,15 +257,65 @@
                                 <span class="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300" x-text="Math.round(quality * 100) + '%'"></span> 
                             </div>
                         </div>
-                        <button
-                            @click="allProcessed ? downloadAllImages() : processAllImages()"
-                            class="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900 disabled:opacity-50 transition-colors duration-300"
-                            :disabled="processing"
-                        >
-                            <span x-show="!processing && !allProcessed">Process All</span>
-                            <span x-show="processing">Processing...</span>
-                            <span x-show="!processing && allProcessed">Download All (.zip)</span>
-                        </button>
+                        <div class="flex space-x-2">
+                            <button
+                                @click="allProcessed ? downloadAllImages() : processAllImages()"
+                                class="inline-flex items-center justify-center px-4 py-4 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900 disabled:opacity-50 transition-colors duration-300 min-w-42 h-14"
+                                :disabled="processing || sendingEmail"
+                                x-show="!showEmailForm"
+                            >
+                                <span x-show="!processing && !allProcessed">Process All</span>
+                                <span x-show="processing">Processing...</span>
+                                <span x-show="!processing && allProcessed">Download All (.zip)</span>
+                            </button>
+                            <div class="relative flex items-center">
+                                <div class="flex overflow-hidden transition-all duration-300 ease-in-out absolute right-full mr-2 top-0" :class="{'w-48': showEmailForm, 'w-0': !showEmailForm}">
+                                    <!-- Removed @submit.prevent from form -->
+                                    <form class="flex space-x-2 min-w-[12rem] max-w-[12rem]">
+                                        <input 
+                                            type="email" 
+                                            id="email" 
+                                            x-model="emailAddress"
+                                            placeholder="Enter email"
+                                            required
+                                            class="block w-full h-14 rounded-md border-gray-300 font-medium p-2 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:text-white transition-colors duration-300"
+                                            :disabled="sendingEmail"
+                                        >
+                                    </form>
+                                </div>
+                                <button 
+                                    @click="emailAddress && showEmailForm ? sendEmail() : (showEmailForm = !showEmailForm)"
+                                    class="inline-flex items-center justify-center px-4 py-4 border border-transparent text-base font-medium rounded-md text-gray-700 dark:text-gray-300 bg-gray-300 dark:bg-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900 transition-colors duration-300 ml-2 w-14 h-14"
+                                    :disabled="sendingEmail && !emailSentSuccess" 
+                                    :type="emailAddress && showEmailForm ? 'submit' : 'button'"
+                                    x-show="allProcessed"
+                                    aria-label="Toggle email input or send email"
+                                >
+                                    <!-- Initial Mail Icon -->
+                                    <svg x-show="!showEmailForm && !sendingEmail && !emailSentSuccess" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                    <!-- Collapse Icon (>>) -->
+                                    <svg x-show="showEmailForm && !emailAddress && !sendingEmail && !emailSentSuccess" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                                    </svg>
+                                    <!-- Send Icon (Paper Plane) -->
+                                    <svg x-show="showEmailForm && emailAddress && !sendingEmail && !emailSentSuccess" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                    </svg>
+                                    <!-- Loading Spinner -->
+                                    <svg x-show="sendingEmail" class="animate-spin h-5 w-5 text-gray-700 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <!-- Success Checkmark -->
+                                    <svg x-show="emailSentSuccess" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 animate-pulse-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </button>
+                            </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -288,6 +351,76 @@
                 toggleClickCount: 0,
                 toggleClickTimer: null,
                 showToggleMessage: false,
+                showEmailForm: false,
+                emailAddress: '',
+                sendingEmail: false,
+                emailSentSuccess: false, // New state for success checkmark
+
+                async sendEmail() {
+                    // Reverted: No longer attempts to attach ZIP
+                    if (!this.emailAddress || this.sendingEmail || this.emailSentSuccess) return;
+                    
+                    this.sendingEmail = true;
+                    this.emailSentSuccess = false; // Ensure success state is reset
+
+                    // Prepare template parameters (text part only)
+                    let fileListText = '';
+                    let totalOriginalSize = 0;
+                    let totalOptimizedSize = 0;
+                    let optimizedFileCount = 0;
+                    
+                    this.files.forEach(f => {
+                        if (f.optimizedBlob) {
+                            fileListText += `- ${f.name} (${this.formatSize(f.size)} -> ${this.formatSize(f.optimizedSize)}, ${this.calculateReduction(f)}% reduction)\n`;
+                            totalOriginalSize += f.size;
+                            totalOptimizedSize += f.optimizedSize;
+                            optimizedFileCount++;
+                        } else {
+                            // Optionally mention non-optimized files, or ignore them
+                            // fileListText += `- ${f.name} (${this.formatSize(f.size)} - Not Optimized)\n`;
+                            // totalOriginalSize += f.size; 
+                        }
+                    });
+
+                    if (optimizedFileCount === 0) {
+                         alert("No optimized files to send in the email.");
+                         this.sendingEmail = false;
+                         return;
+                    }
+
+                    const totalReductionPercent = totalOriginalSize > 0 ? (((totalOriginalSize - totalOptimizedSize) / totalOriginalSize) * 100).toFixed(1) : 0;
+
+                    const templateParams = {
+                        to_email: this.emailAddress,
+                        file_list: fileListText || 'No files were processed.',
+                        original_total_size: this.formatSize(totalOriginalSize),
+                        optimized_total_size: this.formatSize(totalOptimizedSize),
+                        total_reduction_percent: totalReductionPercent
+                        // Removed attachment_zip_base64 parameter
+                    };
+
+                    const serviceID = 'service_w2o5dsu';
+                    const templateID = 'template_6c2qp5a';
+                    const publicKey = 'VOQvk60leWJeTASDz';
+                    
+                    emailjs.send(serviceID, templateID, templateParams, publicKey)
+                        .then((response) => {
+                           console.log('EmailJS SUCCESS!', response.status, response.text);
+                           // Success: Show checkmark briefly
+                           this.sendingEmail = false;
+                           this.emailSentSuccess = true;
+                           
+                           setTimeout(() => {
+                               this.emailSentSuccess = false;
+                               this.showEmailForm = false; // Collapse input
+                               this.emailAddress = '';     // Clear email
+                           }, 1000); // Show checkmark for 1 second
+                        }, (error) => {
+                           console.error('EmailJS FAILED...', error);
+                           alert('Failed to send email. Please check console for details.');
+                           this.sendingEmail = false; // Reset sending state on error
+                        });
+                },
 
                 initDarkMode() {
                     this.isDarkMode = document.documentElement.classList.contains('dark');
@@ -375,13 +508,21 @@
 
                 async downloadAllImages() {
                     const zip = new JSZip();
-                    
-                    this.files.forEach((file, index) => {
-                        const extension = file.outputFormat || 'jpg';
-                        const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-                        const fileName = `optimized-${originalName}.${extension}`;
-                        zip.file(fileName, file.optimizedBlob);
+                    let hasFilesToZip = false;
+                    this.files.forEach((file) => {
+                        if (file.optimizedBlob) { // Only add optimized files
+                            const extension = file.outputFormat || 'jpg';
+                            const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                            const fileName = `optimized-${originalName}.${extension}`;
+                            zip.file(fileName, file.optimizedBlob);
+                            hasFilesToZip = true;
+                        }
                     });
+
+                    if (!hasFilesToZip) {
+                        alert("No optimized files to download.");
+                        return;
+                    }
                     
                     const zipBlob = await zip.generateAsync({type: 'blob'});
                     const link = document.createElement('a');
@@ -420,6 +561,7 @@
 
                 downloadOptimizedImage(index) {
                     const file = this.files[index];
+                    if (!file.optimizedBlob) return; // Don't download if not optimized
                     const extension = file.outputFormat || 'jpg';
                     const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
                     const link = document.createElement('a');
@@ -434,6 +576,7 @@
                 },
 
                 formatSize(bytes) {
+                    if (bytes === null || bytes === undefined) return 'N/A';
                     const units = ['B', 'KB', 'MB'];
                     let size = bytes;
                     let unitIndex = 0;
@@ -447,6 +590,7 @@
                 },
 
                 calculateReduction(file) {
+                    if (!file.optimizedSize || !file.size) return 0; // Handle cases where sizes might be missing
                     const reduction = ((file.size - file.optimizedSize) / file.size) * 100;
                     return reduction.toFixed(1);
                 }
