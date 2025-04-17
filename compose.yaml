@@ -6,6 +6,7 @@ services:
     container_name: smolp
     tty: true
     stdin_open: true
+    # Port can be changed to anything you want to use. 8000 is set as default.
     command: python3 -m http.server 8000
     ports:
       - "8000:8000"
