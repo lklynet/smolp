@@ -1,0 +1,18 @@
+services:
+  smolp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smolp
+    tty: true
+    stdin_open: true
+    # Port can be changed to anything you want to use. 8000 is set as default.
+    command: python3 -m http.server 8000
+    ports:
+      - "8000:8000"
+    # 'Networks' section only there to simulate Nginx Proxy Manager configuration.
+    # If not needed, it can be removed as well as the ports (Considering smolp is in the same docker network).
+    networks:
+      - proxy
+networks:
+  proxy:
