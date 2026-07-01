@@ -1,511 +1,76 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-85LBR0M6FY"></script>
-    <script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-85LBR0M6FY"></script>
+  <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-85LBR0M6FY');
-    </script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smolp - Free Online Image Optimization Tool</title>
-    <meta name="description" content="SMOLP is a free, fast, and secure online tool for optimizing your images. Reduce file size while maintaining quality with support for JPEG, PNG, and WebP formats.">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://smolp.lkly.net">
-    <!-- Delete analytics if self hosting -->
-    <script defer src="https://umami.lkly.net/script.js" data-website-id="7e7bc71c-bc5b-4eb2-b352-7d0d644f52d4"></script>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2132427186104077"
-     crossorigin="anonymous"></script>
-    <script>
-      (function() {
-        const storedPreference = localStorage.getItem('darkMode');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (storedPreference === 'true' || (!storedPreference && prefersDark)) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      })();
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/alpinejs" defer></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-          darkMode: 'class',
-          theme: {
-            extend: {
-              fontFamily: {
-                pacifico: ['Pacifico', 'cursive'],
-                sans: ['Work Sans', 'system-ui', 'sans-serif']
-              },
-              keyframes: {
-                'pulse-check': {
-                  '0%, 100%': { transform: 'scale(1)' },
-                  '50%': { transform: 'scale(1.25)' },
-                }
-              },
-              animation: {
-                'pulse-check': 'pulse-check 0.5s ease-in-out',
-              }
-            }
-          }
-        }
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <style>
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background-color: #111827; 
-            z-index: -10; 
-            transform: translateX(-100%);
-            transition: transform 0.5s cubic-bezier(0.77, 0, 0.175, 1);
-        }
-
-        html.dark body::before {
-            transform: translateX(0%);
-        }
-
-        body {
-            position: relative; 
-            z-index: 1;
-            background-color: transparent; 
-            transition: background-color 0.5s ease; 
-        }
-
-        div[x-data="imageProcessor"] {
-            position: relative;
-            z-index: 2;
-        }
-
-
-        [x-cloak] { display: none !important; }
-
-        .dark-mode-toggle {
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 9999px;
-            background-color: #e5e7eb;
-            transition: background-color 0.2s ease;
-        }
-        html.dark .dark-mode-toggle {
-            background-color: #4b5563;
-        }
-        .dark-mode-toggle .toggle-circle {
-            display: block;
-            width: 1.25rem;
-            height: 1.25rem;
-            border-radius: 9999px;
-            background-color: white;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            transition: transform 0.3s ease;
-        }
-        html.dark .dark-mode-toggle .toggle-circle {
-            transform: translateX(1.25rem);
-            background-color: #374151;
-        }
-    </style>
+    function gtag() { dataLayer.push(arguments); }
+    gtag("js", new Date());
+    gtag("config", "G-85LBR0M6FY");
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>smolp — image optimization</title>
+  <meta name="description" content="Optimize images in your browser. Everything happens locally — your files never leave your device. JPEG, PNG, WebP, AVIF." />
+  <meta name="theme-color" content="#151515" />
+  <meta property="og:title" content="smolp" />
+  <meta property="og:description" content="Optimize images in your browser. Everything happens locally — your files never leave your device." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖼️</text></svg>" />
+  <link href="/css/style.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col">
-    <div x-data="imageProcessor()" x-init="init()" class="flex-grow" role="main">
-        <header class="bg-white dark:bg-gray-800 shadow-sm transition-colors duration-300">
-            <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-                <div>
-                    <h1 class="text-3xl font-pacifico text-gray-900 dark:text-gray-100 transition-colors duration-300">Smolp</h1>
-                </div>
-                <div class="flex space-x-4 items-center">
-
-                    <button @click="toggleDarkMode" class="dark-mode-toggle w-12 h-7 flex items-center" aria-label="Toggle dark mode">
-                        <span class="toggle-circle"></span>
-                    </button>
-
-                    <div x-show="showToggleMessage" 
-                         x-transition:enter="transition ease-out duration-300"
-                         x-transition:enter-start="opacity-0 transform scale-95"
-                         x-transition:enter-end="opacity-100 transform scale-100"
-                         x-transition:leave="transition ease-in duration-200"
-                         x-transition:leave-start="opacity-100 transform scale-100"
-                         x-transition:leave-end="opacity-0 transform scale-95"
-                         class="absolute top-16 right-4 bg-white dark:bg-gray-700 p-3 rounded-lg shadow-lg text-sm text-gray-600 dark:text-gray-300 transition-colors duration-300">
-                        Stop playing with the lights! 😄
-                    </div>
-
-                </div>
-            </div>
-        </header>
-
-        <main class="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-            <div class="mb-8 text-center bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6 transition-colors duration-300">
-                <p class="text-base text-gray-600 dark:text-gray-400 transition-colors duration-300 max-w-xl mx-auto">
-                    Optimize your images right in your browser. Smolp processes everything locally - your files never leave your device.
-                    Support for JPEG, PNG, and WebP formats with adjustable quality settings.
-                </p>
-            </div>
-
-            <div
-                class="mt-4 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg transition-colors duration-300"
-                @dragover.prevent="dragover = true"
-                @dragleave.prevent="dragover = false"
-                @drop.prevent="handleDrop($event)"
-                :class="{'border-blue-500 bg-blue-50 dark:bg-blue-900/30': dragover}"
-            >
-                <div class="space-y-1 text-center">
-                    <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 transition-colors duration-300" stroke="currentColor" fill="none" viewBox="0 0 48 48"> 
-                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <div class="flex text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300"> 
-                        <label class="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500 dark:focus-within:ring-offset-gray-900 transition-colors duration-300">
-                            <span>Upload images</span>
-                            <input type="file" class="sr-only" multiple accept="image/*" @change="handleFileSelect($event)">
-                        </label>
-                        <p class="pl-1">or drag and drop</p>
-                    </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-500 transition-colors duration-300">PNG, JPG, GIF</p> 
-                </div>
-            </div>
-
-            <div x-show="files.length > 0" x-cloak class="mt-8">
-                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 transition-colors duration-300">Images to Process</h2> 
-                <div class="mt-4 space-y-4">
-                    <template x-for="(file, index) in files" :key="index">
-                        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 transition-colors duration-300"> 
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <img :src="file.preview" class="h-16 w-16 object-cover rounded" :alt="'Preview of ' + file.name">
-                                    <div class="ml-4">
-                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors duration-300" x-text="file.name"></p> 
-                                        <p class="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300" x-text="formatSize(file.size)"></p>
-                                    </div>
-                                </div>
-                                <!-- Right side: Reduction % and Buttons - Adjusted for responsiveness -->
-                                <div class="flex flex-col items-end space-y-2 md:flex-row md:items-center md:space-y-0 md:space-x-4 mt-2 md:mt-0">
-                                    <span x-show="file.optimizedSize" class="text-sm text-green-600 dark:text-green-400 transition-colors duration-300 order-last md:order-first">
-                                        Reduced by <span x-text="calculateReduction(file)"></span>%
-                                    </span>
-                                    <div class="flex space-x-2"> <!-- Keep buttons together -->
-                                        <button
-                                            @click="downloadOptimizedImage(index)"
-                                            x-show="file.optimizedBlob"
-                                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900 transition-colors duration-300"
-                                        >
-                                            Download
-                                        </button>
-                                        <button
-                                            @click="removeFile(index)"
-                                            class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-300 p-1.5"
-                                        >
-                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-
-                <!-- Controls Section -->
-                <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 flex justify-center">
-                    <section class="flex flex-col md:flex-row justify-between items-center w-full max-w-xl mx-auto space-y-4 md:space-y-0 md:space-x-6" aria-label="Image Processing Controls">
-                        
-                        <!-- Settings Group -->
-                        <div class="flex space-x-4 w-full md:w-auto" role="group" aria-label="Image Settings">
-                            <div class="flex-1">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-300 mb-1">Output Format</label>
-                                <select x-model="outputFormat" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md transition-colors duration-300">
-                                    <option value="jpeg">JPEG</option>
-                                    <option value="png">PNG</option>
-                                    <option value="webp">WebP</option>
-                                </select>
-                            </div>
-                            <div class="flex-1" :class="{'opacity-50': outputFormat === 'png'}">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-300 mb-1">Quality <span x-show="outputFormat === 'png'" class="text-xs">(N/A for PNG)</span></label> 
-                                <input 
-                                    type="range" 
-                                    x-model.number="quality" 
-                                    min="0.1" max="1" step="0.1" 
-                                    class="block w-full accent-blue-600 dark:accent-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    :disabled="outputFormat === 'png'"
-                                > 
-                                <span class="block text-center text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300 mt-1" x-text="outputFormat === 'png' ? 'Lossless' : Math.round(quality * 100) + '%'"></span> 
-                            </div>
-                        </div>
-                        
-                        <!-- Button Group -->
-                        <div class="flex justify-center w-full md:w-auto">
-                            <button
-                                @click="allProcessed ? downloadAllImages() : processAllImages()"
-                                class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900 disabled:opacity-50 transition-colors duration-300 w-full md:w-auto"
-                                :disabled="processing"
-                            >
-                                <span x-show="!processing && !allProcessed">Process All</span>
-                                <span x-show="processing">Processing...</span>
-                                <span x-show="!processing && allProcessed">Download All (.zip)</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+<body>
+  <header id="header">
+    <div class="header-inner">
+      <div id="logo">smolp</div>
+      <button id="dark-toggle" aria-label="Toggle dark mode">
+        <span class="toggle-circle"></span>
+      </button>
     </div>
-    <footer class="text-center py-4 text-gray-600 dark:text-gray-400 text-sm transition-colors duration-300 bg-white dark:bg-gray-800 shadow-sm mt-auto">
-        <p>Created with ❤️ for the open web.</p>
-        <div class="mt-4 flex justify-center space-x-2 items-center">
-            <a href="https://github.com/lklynet/smolp" target="_blank" rel="noopener" aria-label="View source on GitHub" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
-                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.026 2.747-1.026.546 1.379.201 2.397.098 2.65.64.7 1.028 1.595 1.028 2.688 0 3.848-2.338 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" />
-                </svg>
-            </a>
-            <a href="https://buymeacoffee.com/lkly" target="_blank" rel="noopener" aria-label="Buy me a coffee" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
-                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" role="img" xmlns="http://www.w3.org/2000/svg"><path d="m20.216 6.415-.132-.666c-.119-.598-.388-1.163-1.001-1.379-.197-.069-.42-.098-.57-.241-.152-.143-.196-.366-.231-.572-.065-.378-.125-.756-.192-1.133-.057-.325-.102-.69-.25-.987-.195-.4-.597-.634-.996-.788a5.723 5.723 0 0 0-.626-.194c-1-.263-2.05-.36-3.077-.416a25.834 25.834 0 0 0-3.7.062c-.915.083-1.88.184-2.75.5-.318.116-.646.256-.888.501-.297.302-.393.77-.177 1.146.154.267.415.456.692.58.36.162.737.284 1.123.366 1.075.238 2.189.331 3.287.37 1.218.05 2.437.01 3.65-.118.299-.033.598-.073.896-.119.352-.054.578-.513.474-.834-.124-.383-.457-.531-.834-.473-.466.074-.96.108-1.382.146-1.177.08-2.358.082-3.536.006a22.228 22.228 0 0 1-1.157-.107c-.086-.01-.18-.025-.258-.036-.243-.036-.484-.08-.724-.13-.111-.027-.111-.185 0-.212h.005c.277-.06.557-.108.838-.147h.002c.131-.009.263-.032.394-.048a25.076 25.076 0 0 1 3.426-.12c.674.019 1.347.067 2.017.144l.228.031c.267.04.533.088.798.145.392.085.895.113 1.07.542.055.137.08.288.111.431l.319 1.484a.237.237 0 0 1-.199.284h-.003c-.037.006-.075.01-.112.015a36.704 36.704 0 0 1-4.743.295 37.059 37.059 0 0 1-4.699-.304c-.14-.017-.293-.042-.417-.06-.326-.048-.649-.108-.973-.161-.393-.065-.768-.032-1.123.161-.29.16-.527.404-.675.701-.154.316-.199.66-.267 1-.069.34-.176.707-.135 1.056.087.753.613 1.365 1.37 1.502a39.69 39.69 0 0 0 11.343.376.483.483 0 0 1 .535.53l-.071.697-1.018 9.907c-.041.41-.047.832-.125 1.237-.122.637-.553 1.028-1.182 1.171-.577.131-1.165.2-1.756.205-.656.004-1.31-.025-1.966-.022-.699.004-1.556-.06-2.095-.58-.475-.458-.54-1.174-.605-1.793l-.731-7.013-.322-3.094c-.037-.351-.286-.695-.678-.678-.336.015-.718.3-.678.679l.228 2.185.949 9.112c.147 1.344 1.174 2.068 2.446 2.272.742.12 1.503.144 2.257.156.966.016 1.942.053 2.892-.122 1.408-.258 2.465-1.198 2.616-2.657.34-3.332.683-6.663 1.024-9.995l.215-2.087a.484.484 0 0 1 .39-.426c.402-.078.787-.212 1.074-.518.455-.488.546-1.124.385-1.766zm-1.478.772c-.145.137-.363.201-.578.233-2.416.359-4.866.54-7.308.46-1.748-.06-3.477-.254-5.207-.498-.17-.024-.353-.055-.47-.18-.22-.236-.111-.71-.054-.995.052-.26.152-.609.463-.646.484-.057 1.046.148 1.526.22.577.088 1.156.159 1.737.212 2.48.226 5.002.19 7.472-.14.45-.06.899-.13 1.345-.21.399-.072.84-.206 1.08.206.166.281.188.657.162.974a.544.544 0 0 1-.169.364zm-6.159 3.9c-.862.37-1.84.788-3.109.788a5.884 5.884 0 0 1-1.569-.217l.877 9.004c.065.78.717 1.38 1.5 1.38 0 0 1.243.065 1.658.065.447 0 1.786-.065 1.786-.065.783 0 1.434-.6 1.499-1.38l.94-9.95a3.996 3.996 0 0 0-1.322-.238c-.826 0-1.491.284-2.26.613z"/></svg>
-            </a>
+  </header>
+
+  <div id="toggle-message">Stop playing with the lights!</div>
+
+  <main id="main">
+
+    <div id="dropzone">
+      <div class="drop-inner">
+        <svg class="drop-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4m4-5l5-5 5 5m-5-5v12"/>
+        </svg>
+        <div class="drop-text">
+          <label for="file-input">Upload images</label> or drag and drop
         </div>
-    </footer>
-            </div>
-        </main>
+        <div class="drop-ext">PNG, JPG, GIF, WebP, SVG, AVIF</div>
+      </div>
+      <input type="file" id="file-input" class="hidden" multiple accept="image/*" />
     </div>
 
-    <script>
-        function imageProcessor() {
-            return {
-                files: [],
-                dragover: false,
-                processing: false,
-                allProcessed: false,
-                outputFormat: 'jpeg', // 'jpeg', 'png', 'webp'
-                quality: 0.7, // 0.1 to 1.0 for jpeg/webp
-                isDarkMode: false,
-                toggleClickCount: 0,
-                toggleClickTimer: null,
-                showToggleMessage: false,
+    <div id="image-section" class="hidden">
+      <h2>Images</h2>
+      <div id="image-list"></div>
 
-                init() {
-                    this.initDarkMode();
-                    // Watch for changes in outputFormat or quality
-                    this.$watch('outputFormat', () => this.resetOptimizationStatus());
-                    this.$watch('quality', () => this.resetOptimizationStatus());
-                },
+      <div id="controls">
+        <div class="control-group">
+          <label for="format-select">Format</label>
+          <select id="format-select">
+            <option value="jpeg">JPEG</option>
+            <option value="png">PNG</option>
+            <option value="webp">WebP</option>
+            <option value="avif">AVIF</option>
+          </select>
+        </div>
+        <div class="control-group" id="quality-group">
+          <label for="quality-range">Quality</label>
+          <input type="range" id="quality-range" min="0.1" max="1" step="0.1" value="0.7" />
+          <div class="quality-value" id="quality-value">70%</div>
+        </div>
+        <button id="btn-process">Process All</button>
+      </div>
+    </div>
+  </main>
 
-                initDarkMode() {
-                    this.isDarkMode = document.documentElement.classList.contains('dark');
-                },
-
-                toggleDarkMode() {
-                    this.isDarkMode = !this.isDarkMode;
-                    this.applyDarkMode();
-                    localStorage.setItem('darkMode', this.isDarkMode);
-                    
-                    // Increment click counter
-                    this.toggleClickCount++;
-                    
-                    // Clear existing timer
-                    if (this.toggleClickTimer) {
-                        clearTimeout(this.toggleClickTimer);
-                    }
-                    
-                    // Show message if clicked too many times
-                    if (this.toggleClickCount >= 5) {
-                        this.showToggleMessage = true;
-                        setTimeout(() => {
-                            this.showToggleMessage = false;
-                        }, 3000);
-                        this.toggleClickCount = 0;
-                    }
-                    
-                    // Reset counter after 3 seconds of no clicks
-                    this.toggleClickTimer = setTimeout(() => {
-                        this.toggleClickCount = 0;
-                    }, 3000);
-                },
-
-                applyDarkMode() {
-                    if (this.isDarkMode) {
-                        document.documentElement.classList.add('dark');
-                    } else {
-                        document.documentElement.classList.remove('dark');
-                    }
-                },
-
-                handleDrop(event) {
-                    this.dragover = false;
-                    const droppedFiles = Array.from(event.dataTransfer.files);
-                    this.addFiles(droppedFiles);
-                },
-
-                handleFileSelect(event) {
-                    const selectedFiles = Array.from(event.target.files);
-                    this.addFiles(selectedFiles);
-                },
-
-                addFiles(newFiles) {
-                    const imageFiles = newFiles.filter(file => file.type.startsWith('image/'));
-                    
-                    imageFiles.forEach(file => {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            this.files.push({
-                                file: file,
-                                name: file.name,
-                                size: file.size,
-                                preview: e.target.result,
-                                optimizedBlob: null,
-                                optimizedSize: null
-                            });
-                            // Reset allProcessed flag when new files are added
-                            this.allProcessed = false; 
-                        };
-                        reader.readAsDataURL(file);
-                    });
-                    // Also reset if files were added (covers case where initial list was empty)
-                    if (imageFiles.length > 0) {
-                        this.allProcessed = false;
-                    }
-                },
-
-                async processAllImages() {
-                    this.processing = true;
-                    this.allProcessed = false;
-                    
-                    for (let i = 0; i < this.files.length; i++) {
-                        if (!this.files[i].optimizedBlob) {
-                            await this.optimizeImage(i);
-                        }
-                    }
-                    
-                    this.processing = false;
-                    // Only set allProcessed to true if all files currently in the list have an optimizedBlob
-                    this.allProcessed = this.files.length > 0 && this.files.every(f => f.optimizedBlob); 
-                },
-
-                async downloadAllImages() {
-                    const zip = new JSZip();
-                    let hasFilesToZip = false;
-                    this.files.forEach((file) => {
-                        if (file.optimizedBlob) { // Only add optimized files
-                            const extension = file.outputFormat || 'jpg';
-                            const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-                            const fileName = `optimized-${originalName}.${extension}`;
-                            zip.file(fileName, file.optimizedBlob);
-                            hasFilesToZip = true;
-                        }
-                    });
-
-                    if (!hasFilesToZip) {
-                        alert("No optimized files to download.");
-                        return;
-                    }
-                    
-                    const zipBlob = await zip.generateAsync({type: 'blob'});
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(zipBlob);
-                    link.download = 'optimized-images.zip';
-                    link.click();
-                    URL.revokeObjectURL(link.href);
-                },
-
-                async optimizeImage(index) {
-                    const file = this.files[index].file;
-                    const img = new Image();
-                    
-                    img.src = URL.createObjectURL(file);
-                    await new Promise(resolve => img.onload = resolve);
-                    
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    
-                    ctx.drawImage(img, 0, 0);
-                    
-                    const mimeType = `image/${this.outputFormat}`;
-                    const blob = await new Promise(resolve => {
-                        canvas.toBlob(resolve, mimeType, this.outputFormat === 'png' ? undefined : this.quality);
-                    });
-
-                    // Check if JPEG output is larger than original
-                    if (this.outputFormat === 'jpeg' && blob.size > file.size) {
-                        // If larger, use the original file data instead
-                        this.files[index].optimizedBlob = file; // Use original file Blob
-                        this.files[index].optimizedSize = file.size; // Use original size
-                        this.files[index].outputFormat = 'jpeg'; // Keep track of intended format
-                        console.warn(`JPEG optimization resulted in a larger file (${this.formatSize(blob.size)} > ${this.formatSize(file.size)}) for ${file.name}. Using original file.`);
-                    } else {
-                        // Otherwise, use the optimized blob
-                        this.files[index].optimizedBlob = blob;
-                        this.files[index].optimizedSize = blob.size;
-                        this.files[index].outputFormat = this.outputFormat;
-                    }
-                    
-                    URL.revokeObjectURL(img.src);
-                },
-
-                downloadOptimizedImage(index) {
-                    const file = this.files[index];
-                    if (!file.optimizedBlob) return; // Don't download if not optimized
-                    const extension = file.outputFormat || 'jpg';
-                    const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(file.optimizedBlob);
-                    link.download = `optimized-${originalName}.${extension}`;
-                    link.click();
-                    URL.revokeObjectURL(link.href);
-                },
-
-                removeFile(index) {
-                    this.files.splice(index, 1);
-                    // Re-evaluate allProcessed status after removing a file
-                    this.allProcessed = this.files.length > 0 && this.files.every(f => f.optimizedBlob);
-                },
-
-                formatSize(bytes) {
-                    if (bytes === null || bytes === undefined) return 'N/A';
-                    const units = ['B', 'KB', 'MB'];
-                    let size = bytes;
-                    let unitIndex = 0;
-                    
-                    while (size >= 1024 && unitIndex < units.length - 1) {
-                        size /= 1024;
-                        unitIndex++;
-                    }
-                    
-                    return `${size.toFixed(1)} ${units[unitIndex]}`;
-                },
-
-                calculateReduction(file) {
-                    if (!file.optimizedSize || !file.size || file.size === 0) return 0; // Handle missing sizes or zero original size
-                    // Calculate raw reduction based on original size. Can be negative if optimizedSize > size.
-                    const rawReduction = ((file.size - file.optimizedSize) / file.size) * 100;
-                    // Clamp the result to be non-negative. Show 0% if size increased or stayed the same.
-                    const displayReduction = Math.max(0, rawReduction); 
-                    return displayReduction.toFixed(1);
-                },
-
-                resetOptimizationStatus() {
-                    // Reset optimization data for all files when settings change
-                    this.files.forEach(file => {
-                        file.optimizedBlob = null;
-                        file.optimizedSize = null;
-                    });
-                    this.allProcessed = false; // Allow reprocessing
-                    console.log('Optimization settings changed. Ready to reprocess.');
-                }
-            };
-        }
-    </script>
+  <script src="/scripts.js" defer></script>
 </body>
 </html>

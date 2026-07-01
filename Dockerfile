@@ -1,7 +1,10 @@
-FROM python:3.13.3-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
-RUN python -m pip install --upgrade pip
+COPY server.js index.html scripts.js ./
+COPY css ./css
 
-COPY . .
+EXPOSE 3000
+
+CMD ["node", "server.js"]
